@@ -43,16 +43,30 @@ public class HeapBasedSettleUpStrategy implements SettleUpStrategy{
             }
         }
 
-
         //calculate the transactions until the heaps become empty
-        //
+        while(!minHeap.isEmpty()){
+            // removing out min from minHeap, and max from maxHeap
+            Map.Entry<User, Double> maxHasToPay = minHeap.poll(); // 100 => -100
+            Map.Entry<User, Double> maxWillGetPaid = maxHeap.poll(); // 50 => +50
+            TransactionDTO transactionDTO = new TransactionDTO(
+                    maxHasToPay.getKey().getName(),
+                    maxWillGetPaid.getKey().getName(),
+                    Math.min(Math.abs(maxHasToPay.getValue()), maxWillGetPaid.getValue())
+            );
+            transactions.add(transactionDTO);
 
-
-
-
-
-
-
+            double newBalance = maxHasToPay.getValue() + maxWillGetPaid.getValue(); // -ve + +ve => difference
+            if(newBalance == 0){ // means both were equal and settled the balances
+                System.out.println("Settled for :  " + maxHasToPay.getKey().getName() + ", and " + maxWillGetPaid.getKey().getName());
+            } else if(newBalance < 0) { // means person who had to pay was greater in value, so goes back t0 min Heap with new updated balance
+                maxHasToPay.setValue(newBalance);
+                minHeap.add(maxHasToPay);
+            } else if(newBalance > 0){ // means person who will get paid was greater in value, so goes back t0 max Heap with new updated balance
+                maxWillGetPaid.setValue(newBalance);
+                maxHeap.add(maxWillGetPaid);
+            }
+        }
+        return transactions;
     }
 
     private double getUpdatedOutStandingAmount(double currentOutStandingAmount, UserExpense userExpense){
@@ -64,7 +78,6 @@ public class HeapBasedSettleUpStrategy implements SettleUpStrategy{
         return currentOutStandingAmount;
     }
 }
-
 
 /*
         Expense
